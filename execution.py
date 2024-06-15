@@ -6,6 +6,7 @@ import heapq
 import traceback
 import inspect
 from typing import List, Literal, NamedTuple, Optional
+import time
 
 import torch
 import nodes
@@ -139,6 +140,8 @@ def recursive_execute(server, prompt, outputs, current_item, extra_data, execute
     input_data_all = None
     try:
         input_data_all = get_input_data(inputs, class_def, unique_id, outputs, prompt, extra_data)
+        start_time = time.time()
+        print(f"Executing {class_type} #{unique_id} {class_def}...")
         if server.client_id is not None:
             server.last_node_id = unique_id
             server.send_sync("executing", { "node": unique_id, "prompt_id": prompt_id }, server.client_id)
@@ -150,6 +153,7 @@ def recursive_execute(server, prompt, outputs, current_item, extra_data, execute
 
         output_data, output_ui = get_output_data(obj, input_data_all)
         outputs[unique_id] = output_data
+        print(f"Executed {class_type} {time.time() - start_time:.3f}s #{unique_id} {class_def}")
         if len(output_ui) > 0:
             outputs_ui[unique_id] = output_ui
             if server.client_id is not None:
