@@ -35,6 +35,8 @@ class Blend:
 
     def blend_images(self, image1: torch.Tensor, image2: torch.Tensor, blend_factor: float, blend_mode: str):
         image2 = image2.to(image1.device)
+        print(f"DEBUG: {image1.shape}, {image2.shape}")
+        image1, image2 = self.broadcast_singletons(image1, image2)
         if image1.shape != image2.shape:
             image2 = image2.permute(0, 3, 1, 2)
             image2 = comfy.utils.common_upscale(image2, image1.shape[2], image1.shape[1], upscale_method='bicubic', crop='center')
@@ -45,6 +47,14 @@ class Blend:
         blended_image = torch.clamp(blended_image, 0, 1)
         return (blended_image,)
 
+    def broadcast_singletons(self, a, b):
+        max_len = max(a.shape[0], b.shape[0])
+        if a.shape[0] < max_len:
+            a = torch.cat([a] * (max_len // a.shape[0]))
+        if len(b) < max_len:
+            b = torch.cat([b] * (max_len // b.shape[0]))
+        return a, b
+        
     def blend_mode(self, img1, img2, mode):
         if mode == "normal":
             return img2
